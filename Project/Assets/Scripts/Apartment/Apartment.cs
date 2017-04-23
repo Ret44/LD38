@@ -15,9 +15,9 @@ public class Apartment : MonoBehaviour {
 
     public static Apartment instance;
 
-    private int[,] map;
+    public int[,] map;
 
-    private ApartmentNode[,] objectMap;
+    public ApartmentNode[,] objectMap;
 
     [SerializeField]
     private GameObject nodePrefab;
@@ -29,19 +29,21 @@ public class Apartment : MonoBehaviour {
     void Awake()
     {
         instance = this;
-        
     }
 
     void LoadMap()
     {
         objectMap = new ApartmentNode[(int)apartmentSize.x, (int)apartmentSize.y];
-        for(int x=0; x<apartmentSize.x; x++)
+        map = new int[(int)apartmentSize.x, (int)apartmentSize.y];
+        for (int x=0; x<apartmentSize.x; x++)
         {
             for(int y=0; y<apartmentSize.y; y++)
             {
                 GameObject gObj = Instantiate(nodePrefab, new Vector3(x - (apartmentSize.x / 2), 0, y - (apartmentSize.y / 2)), Quaternion.identity) as GameObject;
                 gObj.transform.parent = transform;
                 objectMap[x,y] = gObj.GetComponent<ApartmentNode>();
+                objectMap[x, y].coord = new Vector2(x, y);
+                map[x, y] = 0;
             }
         }
     }

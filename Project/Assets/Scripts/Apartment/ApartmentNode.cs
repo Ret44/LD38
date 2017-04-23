@@ -7,7 +7,12 @@ public class ApartmentNode : MonoBehaviour {
     [SerializeField]
     private MeshRenderer meshRenderer;
 
-    public bool isTargeted;
+    [SerializeField]
+    public TextMesh debugUi;
+    public bool debugGrid = false;
+
+    public NodePosition status;
+    public Vector2 coord;
 
     void Awake()
     {
@@ -21,20 +26,29 @@ public class ApartmentNode : MonoBehaviour {
 
     public bool TargetMe()
     {
-        isTargeted = true;
+        if (Apartment.instance.map[(int)coord.x, (int)coord.y] != 0)
+        {
+            status = NodePosition.Incorrect;
+            return false;
+        }
+        status = NodePosition.Correct;
         return true;
     }
 	
 	// Update is called once per frame
 	void Update () {
-        if (isTargeted)
+        if (status == NodePosition.Correct)
             meshRenderer.material.color = Color.green;        
+        else if(status == NodePosition.Incorrect)
+            meshRenderer.material.color = Color.red;        
         else
-            meshRenderer.material.color = Color.white;        
+            meshRenderer.material.color = Color.white;
+
+        debugUi.text = debugGrid?Apartment.instance.map[(int)coord.x, (int)coord.y].ToString():"";
 	}
 
     void LateUpdate()
     {
-        isTargeted = false;
+        status = NodePosition.Outside;
     }
 }

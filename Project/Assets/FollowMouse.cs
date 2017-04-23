@@ -10,9 +10,12 @@ public class FollowMouse : MonoBehaviour {
 
     public NodeSelector[] selectors;
 
+    private List<ApartmentNode> nodesTaken;
+    public MeshRenderer meshRenderer;
     public int okCount;
 
     public Vector3 dragStartPosition;
+    public ParticleSystem dustParticles;
 
     void OnMouseDown()
     {
@@ -24,6 +27,11 @@ public class FollowMouse : MonoBehaviour {
             screenPoint = Camera.main.WorldToScreenPoint(gameObject.transform.position);
 
             offset = gameObject.transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
+
+            for(int i=0; i < nodesTaken.Count; i++)
+            {
+                Apartment.instance.map[(int)nodesTaken[i].coord.x, (int)nodesTaken[i].coord.y] = 0;
+            }
 
             for (int i = 0; i < selectors.Length; i++)
             {
@@ -44,49 +52,102 @@ public class FollowMouse : MonoBehaviour {
            
             curPosition.z = curPosition.y;
             curPosition.y = 3;
-            curPosition.x = Mathf.Round(curPosition.x);
-            curPosition.z = Mathf.Round(curPosition.z);
+            curPosition.x = Mathf.Round(2*curPosition.x) / 2;
+            curPosition.z = Mathf.Round(2*curPosition.z) / 2;
+            
             transform.position = curPosition;
 
             okCount = 0;
 
+            if(Input.GetKeyDown(KeyCode.Q))
+            {
+                transform.Rotate(new Vector3(0, 90, 0));
+            }
+
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                transform.Rotate(new Vector3(0, -90, 0));
+            }
+
             for (int i = 0; i < selectors.Length; i++)
             {
                 RaycastHit hitInfo;
-                if (Physics.Raycast(selectors[i].transform.position,Vector3.down, out hitInfo))
+                if (Physics.Raycast(selectors[i].transform.position,Vector3.down, out hitInfo, 1<<9))
                 {
                     if (hitInfo.collider.CompareTag("Node"))
                     {
-                        selectors[i].isOK = hitInfo.collider.GetComponent<ApartmentNode>().TargetMe();
-                        if (selectors[i].isOK)
+                        bool canBeTargeted = hitInfo.collider.GetComponent<ApartmentNode>().TargetMe();
+                        if (canBeTargeted)
                         {
-                            selectors[i].targetPosition = hitInfo.collider.transform.position;
-
+                            selectors[i].targetNode = hitInfo.collider.GetComponent<ApartmentNode>();
+                            selectors[i].nodePosition = NodePosition.Correct;
                             okCount++;
+                        }
+                        else
+                        {
+                            selectors[i].nodePosition = NodePosition.Incorrect;
                         }
                     }
                     else
-                        selectors[i].isOK = false;
+                        selectors[i].nodePosition = NodePosition.Outside;
                 }
             }
+            if(meshRenderer != null && okCount == selectors.Length)
+            {
+                meshRenderer.material.color = Color.green;
+            }
+            else
+            {
+                meshRenderer.material.color = Color.white;
+            }
         }
+    }
+
+    bool IsOutside()
+    {
+        bool outside = true;
+        for (int i = 0; i < selectors.Length; i++)
+            if (selectors[i].nodePosition != NodePosition.Outside)
+                outside = false;
+        return outside;
+    }
+
+    bool IsCorrect()
+    {
+        bool correct = true;
+        for (int i = 0; i < selectors.Length; i++)
+            if (selectors[i].nodePosition != NodePosition.Correct)
+                correct = false;
+        return correct;
     }
 
     void OnMouseUp()
     {
         Cursor.visible = true;
         transform.position = new Vector3(transform.position.x, 0, transform.position.z);
-        bool isOK = (okCount == selectors.Length);
-            
+        bool isOK = IsCorrect() || IsOutside();
+        meshRenderer.material.color = Color.white;
+
         if (!isOK)
+        {
             transform.position = dragStartPosition;
+            for (int i = 0; i < nodesTaken.Count; i++)
+            {
+                Apartment.instance.map[(int)nodesTaken[i].coord.x, (int)nodesTaken[i].coord.y] = 1;
+            }
+        }
         else
         {
-            for(int i=0; i<selectors.Length; i++)
+            nodesTaken.Clear();
+            for (int i = 0; i < selectors.Length; i++)
             {
+                int coordX = (int)selectors[i].targetNode.coord.x;
+                int coordY = (int)selectors[i].targetNode.coord.y;
+                Apartment.instance.map[coordX, coordY] = 1;
+                nodesTaken.Add(Apartment.instance.objectMap[coordX, coordY]);
                 Vector3 parentPos = selectors[i].transform.position - selectors[i].transform.localPosition;
                 parentPos.y = 0;
-                selectors[i].transform.parent.position = parentPos;
+                //selectors[i].transform.parent.position = parentPos;
             }
         }
         //if(isOK)
@@ -98,7 +159,10 @@ public class FollowMouse : MonoBehaviour {
         //}
     }
 
-  
+   void Awake()
+    {
+        nodesTaken = new List<ApartmentNode>();
+    }
 
     // Use this for initialization
     void Start() {

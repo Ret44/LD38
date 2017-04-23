@@ -2,12 +2,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum NodePosition
+{
+    Outside,
+    Correct,
+    Incorrect
+}
+
+
 public class NodeSelector : MonoBehaviour {
 
     public bool isActivated;
-    public bool isOK;
+    public NodePosition nodePosition;
 
-    public Vector3 targetPosition;
+    public ApartmentNode targetNode;
 
 	// Use this for initialization
 	void Start () {
