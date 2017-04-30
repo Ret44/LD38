@@ -24,6 +24,11 @@ public class ApartmentNode : MonoBehaviour {
 		
 	}
 
+    public void SetColor(Color color)
+    {
+        meshRenderer.material.color = color;
+    }
+
     public bool TargetMe()
     {
         if (Apartment.instance.map[(int)coord.x, (int)coord.y] != 0)

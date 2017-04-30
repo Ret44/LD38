@@ -48,8 +48,19 @@ public class Apartment : MonoBehaviour {
         }
     }
 
-	// Use this for initialization
-	void Start () {
+    public static void Reset()
+    {
+        for (int x = 0; x < apartmentSize.x; x++)
+        {
+            for (int y = 0; y < apartmentSize.y; y++)
+            {
+                instance.map[x, y] = 0;
+            }
+        }
+    }
+
+    // Use this for initialization
+    void Start () {
         LoadMap();
 	}
 	
